@@ -80,7 +80,8 @@ public class MonoTest {
         // Params 1: Consumer consumer – the consumer to invoke on each next signal
         // 2: Consumer errorConsumer – the consumer to invoke on error signal
         // 3: Runnable completeConsumer - the consumer to invoke on complete signal
-        // 4: Consumer subscriptionConsumer - the consumer to invoke on subscribe signal
+        // 4: Consumer subscriptionConsumer - the consumer to invoke on subscribe signal, , to be used
+        //	 for the initial subscription.request(n), or null for max request
         mono.subscribe(s->log.info("Name: "+s),
                 s->log.error("ERROR HAPPENED!"),
                 () -> log.info("FINISHED!!"),
@@ -92,10 +93,34 @@ public class MonoTest {
                 () -> log.info("FINISHED!!"),
                 subscription -> log.info("on subscribe: "+subscription.toString()));
 
+        log.info("---------correct approach-----------------");
+        mono.subscribe(s->log.info("Name: "+s),
+                s->log.error("ERROR HAPPENED!"),
+                () -> log.info("FINISHED!!"),
+                subscription -> subscription.request(5));
+
         log.info("--------------------------");
         StepVerifier.create(mono)
                 .expectNext(name.toUpperCase())
                 .verifyComplete();
+    }
+
+    @Test
+    public void monoDoOnMethods(){
+        String name = "William Suane";
+        Mono<String> mono = Mono.just(name).log()
+                .map(String::toUpperCase)
+                .doOnSubscribe(s->log.info("inside doOnSubscribe -- {}",s))
+                .doOnRequest(s -> log.info("inside doOnRequest -- {}",s))
+                .doOnNext(s -> log.info("inside doOnNext -- {}",s))
+                .doOnSuccess(s -> log.info("inside doOnSuccess -- {}",s));
+
+        mono.subscribe(s -> log.info("received value {}",s),
+                throwable -> {throw new RuntimeException("error happened!");},
+                () -> log.info("FINISHED!"),
+                subscription -> subscription.request(5));
+
+
     }
 
 
