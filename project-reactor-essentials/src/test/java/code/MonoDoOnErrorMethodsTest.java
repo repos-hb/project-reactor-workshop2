@@ -44,12 +44,12 @@ public class MonoDoOnErrorMethodsTest {
     public void testOnErrorReturn(){
         String data = "new mono";
         Mono<Object> errorMono = Mono.error(new IllegalArgumentException("error from mono"))
-                .onErrorReturn(Mono.just(data))
+                .onErrorReturn(data)
                 .doOnNext(s->log.info("executing after handling error"))
                 .log();
 
         StepVerifier.create(errorMono)
-                .expectNextCount(1)
+                .expectNext(data)
                 .verifyComplete();
     }
 }
