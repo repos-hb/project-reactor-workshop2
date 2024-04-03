@@ -2,6 +2,8 @@ package code;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 
 import java.util.Arrays;
@@ -65,5 +67,42 @@ public class FluxTest {
         emp.subscribe(integer -> log.info(String.valueOf(integer)),
                 e->log.error("error happened"),
                 ()->log.info("DONE"));
+    }
+
+    @Test
+    public void testFluxBackpressure_uglyWay(){
+        Flux<Integer> flux = Flux.range(1, 10).log();
+
+        flux.subscribe(new Subscriber<Integer>() {
+
+            private int requestCount=2;
+            private int count=0;
+            private Subscription subscription;
+
+            @Override
+            public void onSubscribe(Subscription s) {
+                this.subscription=s;
+                subscription.request(requestCount);
+            }
+
+            @Override
+            public void onNext(Integer integer) {
+                count++;
+                if(count==requestCount){
+                    count=0;
+                    this.subscription.request(requestCount);
+                }
+            }
+
+            @Override
+            public void onError(Throwable t) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
     }
 }
