@@ -6,11 +6,11 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 @Slf4j
 public class FluxTest {
@@ -132,4 +132,56 @@ public class FluxTest {
             }
         });
     }
+
+    @Test
+    public void testFluxInterval() throws InterruptedException {
+        Flux<Long> flux = Flux.interval(Duration.ofMillis(100))
+                .take(10)
+                .log();
+
+        flux.subscribe(i->log.info("Number {}",i));
+
+        // interval Flux emission is handled by another thread
+        // main thread dies immediately if not put to sleep()
+        Thread.sleep(3000);
+    }
+
+    @Test
+    public void testFluxInterval2() throws InterruptedException {
+        // emits after an initial delay of 1s and then at regular interval of 2s
+        Flux<Long> flux = Flux.interval(Duration.ofMillis(1000),Duration.ofMillis(2000))
+                .log();
+
+        flux.subscribe(i->log.info("Number {}",i));
+
+        Thread.sleep(9000);
+    }
+
+    @Test
+    public void testFluxInterval3() throws InterruptedException {
+          StepVerifier.withVirtualTime(this::createInterval)
+                  .expectSubscription()
+                  .thenAwait(Duration.ofDays(1L))
+                  .expectNext(0L)
+                  .thenCancel()
+                  .verify();
+    }
+
+    @Test
+    public void testFluxInterval4() throws InterruptedException {
+        StepVerifier.withVirtualTime(this::createInterval)
+                .expectSubscription()
+                .expectNoEvent(Duration.ofHours(24))
+                .expectNext(0L)
+                .thenAwait(Duration.ofDays(1L))
+                .expectNext(1L)
+                .thenCancel()
+                .verify();
+    }
+
+    private Flux<Long> createInterval() {
+        return Flux.interval(Duration.ofDays(1L))
+                .log();
+    }
+
 }
