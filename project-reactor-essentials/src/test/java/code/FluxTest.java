@@ -221,4 +221,19 @@ public class FluxTest {
                 .verify();
     }
 
+    @Test
+    public void testAutoConnectableFlux() throws InterruptedException {
+        Flux<Integer> fluxAuto = Flux.range(1, 10)
+                .delayElements(Duration.ofMillis(200))
+                .publish()
+                .autoConnect(2);
+
+        StepVerifier.create(fluxAuto)
+                .then(fluxAuto::subscribe)
+                .thenConsumeWhile(integer -> integer<=5)
+                .expectNext(6,7,8,9,10)
+                .expectComplete()
+                .verify();
+    }
+
 }
