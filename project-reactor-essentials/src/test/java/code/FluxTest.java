@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.ConnectableFlux;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -191,6 +192,26 @@ public class FluxTest {
     private Flux<Long> createInterval() {
         return Flux.interval(Duration.ofDays(1L))
                 .log();
+    }
+
+    @Test
+    public void testConnectableFlux() throws InterruptedException {
+        ConnectableFlux<Integer> connectableFlux = Flux.range(1, 10)
+//                .log()
+                .delayElements(Duration.ofMillis(200))
+                .publish();
+
+        connectableFlux.connect();
+
+        log.info("Putting main thread to sleep for 300ms");
+        Thread.sleep(200);
+
+        connectableFlux.subscribe(i->log.info("Consumed ###{}",i));
+
+        log.info("Putting main thread to sleep for 200ms");
+        Thread.sleep(300);
+
+        connectableFlux.subscribe(i->log.info("Consumed ######{}",i));
     }
 
 }
