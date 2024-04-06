@@ -201,17 +201,24 @@ public class FluxTest {
                 .delayElements(Duration.ofMillis(200))
                 .publish();
 
-        connectableFlux.connect();
+//        connectableFlux.connect();
+//
+//        log.info("Putting main thread to sleep for 300ms");
+//        Thread.sleep(200);
+//
+//        connectableFlux.subscribe(i->log.info("Consumed ###{}",i));
+//
+//        log.info("Putting main thread to sleep for 200ms");
+//        Thread.sleep(300);
+//
+//        connectableFlux.subscribe(i->log.info("Consumed ######{}",i));
 
-        log.info("Putting main thread to sleep for 300ms");
-        Thread.sleep(200);
-
-        connectableFlux.subscribe(i->log.info("Consumed ###{}",i));
-
-        log.info("Putting main thread to sleep for 200ms");
-        Thread.sleep(300);
-
-        connectableFlux.subscribe(i->log.info("Consumed ######{}",i));
+        StepVerifier.create(connectableFlux)
+                .then(connectableFlux::connect)
+                .thenConsumeWhile(integer -> integer<=5)
+                .expectNext(6,7,8,9,10)
+                .expectComplete()
+                .verify();
     }
 
 }
