@@ -134,6 +134,15 @@ public class FluxTest {
     }
 
     @Test
+    public void testBackpressureWithRateLimit(){
+        Flux<Integer> flux = Flux.range(1, 10)
+                .log()
+                .limitRate(3);
+
+        flux.subscribe(i->log.info("Number {}",i));
+    }
+
+    @Test
     public void testFluxInterval() throws InterruptedException {
         Flux<Long> flux = Flux.interval(Duration.ofMillis(100))
                 .take(10)
