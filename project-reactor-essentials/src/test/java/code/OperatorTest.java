@@ -121,4 +121,30 @@ public class OperatorTest {
                 .expectComplete()
                 .verify();
     }
+
+    @Test
+    public void testDefer() throws InterruptedException {
+        Flux<Long> just = Flux.just(System.currentTimeMillis());
+
+        just.subscribe(ms->log.info("{}",ms));
+        Thread.sleep(100);
+        just.subscribe(ms->log.info("{}",ms));
+        Thread.sleep(100);
+        just.subscribe(ms->log.info("{}",ms));
+        Thread.sleep(100);
+        just.subscribe(ms->log.info("{}",ms));
+
+        log.info("-----------");
+
+        // defer executes the given supplier every time a subscription happens
+        Flux<Long> defer = Flux.defer(() -> Flux.just(System.currentTimeMillis()));
+
+        defer.subscribe(ms->log.info("{}",ms));
+        Thread.sleep(100);
+        defer.subscribe(ms->log.info("{}",ms));
+        Thread.sleep(100);
+        defer.subscribe(ms->log.info("{}",ms));
+        Thread.sleep(100);
+        defer.subscribe(ms->log.info("{}",ms));
+    }
 }
