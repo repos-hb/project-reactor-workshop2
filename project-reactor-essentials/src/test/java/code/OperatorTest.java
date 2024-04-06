@@ -77,7 +77,7 @@ public class OperatorTest {
                     log.info("Map1: Thread {}: Data{}", Thread.currentThread().getName(), i);
                     return i;
                 })
-                .subscribeOn(Schedulers.boundedElastic())    
+                .subscribeOn(Schedulers.boundedElastic())
                 .map(i -> {
                     log.info("Map2: Thread {}: Data{}", Thread.currentThread().getName(), i);
                     return i;
@@ -106,6 +106,18 @@ public class OperatorTest {
         StepVerifier.create(flux)
                 .expectSubscription()
                 .expectNext(1,2,3,4,5)
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    public void testSwitchIfEmpty(){
+        Flux<Object> flux = Flux.empty()
+                .switchIfEmpty(Flux.just("not empty"));
+
+        StepVerifier.create(flux)
+                .expectSubscription()
+                .expectNext("not empty")
                 .expectComplete()
                 .verify();
     }
