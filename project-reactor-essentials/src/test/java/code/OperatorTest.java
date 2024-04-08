@@ -305,4 +305,51 @@ public class OperatorTest {
                 .verify();
 
     }
+
+    @Test
+    public void testFlatMap() throws InterruptedException {
+        Flux<String> flux1 = Flux.just("a", "b");
+
+//        Flux<Flux<String>> fluxFlux = flux1.map(String::toUpperCase)
+//                .map(this::getData)
+//                .log();
+
+        Flux<String> fluxFlux = flux1.map(String::toUpperCase)
+                .flatMap(this::getData)
+                .log();
+
+        fluxFlux.subscribe(s->log.info(s.toString()));
+
+        Thread.sleep(500);
+    }
+
+    @Test
+    public void testFlatMapSequential() throws InterruptedException {
+        Flux<String> flux1 = Flux.just("a", "b").delayElements(Duration.ofMillis(200));
+
+        // data ordering is not guaranteed
+        Flux<String> fluxFlux = flux1.map(String::toUpperCase)
+                .flatMap(this::getData)
+                .log();
+
+        StepVerifier.create(fluxFlux)
+                .expectSubscription()
+                .expectNext("a1", "b1", "b2", "b3", "a2", "a3")
+                .expectComplete()
+                .verify();
+
+        Flux<String> fluxSeq = flux1.map(String::toUpperCase)
+                .flatMapSequential(this::getData)
+                .log();
+
+        StepVerifier.create(fluxSeq)
+                .expectSubscription()
+                .expectNext("a1", "a2", "a3","b1", "b2", "b3")
+                .expectComplete()
+                .verify();
+    }
+
+    private Flux<String> getData(String name) {
+        return name.equals("A") ? Flux.just("a1", "a2", "a3").delayElements(Duration.ofMillis(100)) : Flux.just("b1", "b2", "b3");
+    }
 }
