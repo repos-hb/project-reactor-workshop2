@@ -211,6 +211,28 @@ public class OperatorTest {
     }
 
     @Test
+    public void differenceBetweenConcatAndMerge() throws InterruptedException {
+        // interleaved emissions
+        Flux<String> flux1 = Flux.just("a", "b").delayElements(Duration.ofMillis(200));
+        Flux<String> flux2 = Flux.just("c", "d").delayElements(Duration.ofMillis(100));
+
+        Flux<String> fluxMerged = Flux.merge(flux1, flux2).log();
+
+        StepVerifier.create(fluxMerged)
+                .expectSubscription()
+                .expectNext("c","a","d","b")
+                .verifyComplete();
+
+        Flux<String> fluxConcat = Flux.concat(flux1, flux2);
+
+        StepVerifier.create(fluxConcat)
+                .expectSubscription()
+                .expectNext("a","b","c","d")
+                .verifyComplete();
+
+    }
+
+    @Test
     public void testMergeWith() throws InterruptedException {
         Flux<String> flux1 = Flux.just("a", "b").delayElements(Duration.ofMillis(200));
         Flux<String> flux2 = Flux.just("c", "d");
