@@ -1,5 +1,9 @@
 package code;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -351,5 +355,42 @@ public class OperatorTest {
 
     private Flux<String> getData(String name) {
         return name.equals("A") ? Flux.just("a1", "a2", "a3").delayElements(Duration.ofMillis(100)) : Flux.just("b1", "b2", "b3");
+    }
+
+    @Data
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    @ToString
+    class Anime {
+        private String title;
+        private String studio;
+        private int episodes;
+    }
+
+    @Test
+    public void testZip(){
+        Flux<String> titlesFlux = Flux.just("goki", "bak");
+        Flux<String> studioFlux = Flux.just("RED-BLUE", "TMS");
+        Flux<Integer> episodesFlux = Flux.just(12,24);
+
+        Flux<Anime> animeFlux = Flux.zip(titlesFlux, studioFlux, episodesFlux)
+                .flatMap(tuple -> Flux.just(new Anime(tuple.getT1(), tuple.getT2(), tuple.getT3())));
+
+        animeFlux.subscribe(anime -> log.info(anime.toString()));
+    }
+
+    @Test
+    public void testZipWith(){
+        Flux<String> titlesFlux = Flux.just("goki", "bak");
+        Flux<String> studioFlux = Flux.just("RED-BLUE", "TMS");
+        Flux<Integer> episodesFlux = Flux.just(12,24);
+
+        Flux<Anime> animeFlux = Flux.zip(titlesFlux, studioFlux, episodesFlux)
+                .flatMap(tuple -> Flux.just(new Anime(tuple.getT1(), tuple.getT2(), tuple.getT3())));
+
+        titlesFlux.zipWith(episodesFlux)
+                        .flatMap(tuple -> Flux.just(new Anime(tuple.getT1(), null, tuple.getT2())));
+
+        animeFlux.subscribe(anime -> log.info(anime.toString()));
     }
 }
