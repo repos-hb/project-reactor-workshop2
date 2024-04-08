@@ -7,6 +7,8 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
+
 @Slf4j
 public class OperatorTest {
 
@@ -187,5 +189,24 @@ public class OperatorTest {
                 .expectSubscription()
                 .expectNext("bc", "bd")
                 .verifyComplete();
+    }
+
+    @Test
+    public void testMerge() throws InterruptedException {
+        Flux<String> flux1 = Flux.just("a", "b").delayElements(Duration.ofMillis(200));
+        Flux<String> flux2 = Flux.just("c", "d");
+
+        Flux<String> fluxMerged = Flux.merge(flux1, flux2).log();
+
+        // Obs: running in different threads
+        fluxMerged.subscribe(log::info);
+
+        Thread.sleep(1000);
+
+        StepVerifier.create(fluxMerged)
+                .expectSubscription()
+                .expectNext("c","d","a","b")
+                .verifyComplete();
+
     }
 }
