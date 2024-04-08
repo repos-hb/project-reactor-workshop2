@@ -177,6 +177,26 @@ public class OperatorTest {
     }
 
     @Test
+    public void testConcatDelayError(){
+        Flux<String> flux1 = Flux.just("a", "b")
+                .map(s -> {
+                    if("b".equals(s))
+                        throw new IllegalArgumentException();
+                    return s;
+                }).doOnError(t->log.error("something bad happened"));
+
+        Flux<String> flux2 = Flux.just("c", "d");
+
+        Flux<String> concatFlux = Flux.concatDelayError(flux1, flux2);
+
+        StepVerifier.create(concatFlux)
+                .expectSubscription()
+                .expectNext("a","c", "d")
+                .expectError()
+                .verify();
+    }
+
+    @Test
     public void testCombineLatest(){
         Flux<String> flux1 = Flux.just("a", "b");
         Flux<String> flux2 = Flux.just("c", "d");
@@ -262,6 +282,27 @@ public class OperatorTest {
                 .expectSubscription()
                 .expectNext("a","b","c","d","a","b")
                 .verifyComplete();
+
+    }
+
+    @Test
+    public void testMergeDelayError() {
+        Flux<String> flux1 = Flux.just("a", "b")
+                .map(s -> {
+                    if("b".equals(s))
+                        throw new IllegalArgumentException();
+                    return s;
+                }).doOnError(t->log.error("something bad happened"));
+
+        Flux<String> flux2 = Flux.just("c", "d");
+
+        Flux<String> fluxMerged = Flux.mergeDelayError(1, flux1, flux2);
+
+        StepVerifier.create(fluxMerged)
+                .expectSubscription()
+                .expectNext("a","c","d")
+                .expectError()
+                .verify();
 
     }
 }
